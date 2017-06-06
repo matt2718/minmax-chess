@@ -238,15 +238,14 @@ std::vector<Move> Chessboard::getLegalMoves(int row, int col) {
 	// piece-specific stuff
 	switch (board[row][col]) {
 	case 'p': // pawn
-		if (isWhite && col < 7) {
+		if (isWhite && row < 7) {
 			//forward
 			if (board[row + 1][col] == ' ')
 				moves.push_back({row, col, row + 1, col});
 
 			if (col > 0) {
 				// capture left
-				if (board[row + 1][col - 1] != ' ' &&
-				    white[row + 1][col - 1])
+				if (board[row + 1][col - 1] != ' ' && !white[row + 1][col - 1])
 					moves.push_back({row, col, row + 1, col - 1});
 				// en passant
 				if (board[row + 1][col - 1] == ' ' &&
@@ -256,8 +255,7 @@ std::vector<Move> Chessboard::getLegalMoves(int row, int col) {
 			
 			if (col < 7) {
 				// capture right
-				if (board[row + 1][col + 1] != ' ' &&
-				    white[row + 1][col + 1])
+				if (board[row + 1][col + 1] != ' ' && !white[row + 1][col + 1])
 					moves.push_back({row, col, row + 1, col + 1});
 				// en passant
 				if (board[row + 1][col + 1] == ' ' &&
@@ -358,6 +356,7 @@ std::vector<Move> Chessboard::getLegalMoves(int row, int col) {
 	case 'q': // queen
 		for (int rdir = -1; rdir <= 1; rdir++) {
 			for (int cdir = -1; cdir <= 1; cdir++) {
+				if (rdir == 0 && cdir == 0) continue;
 				for (int r = row + rdir, c = col + cdir;
 				     checkDest(isWhite, r, c); r+= rdir, c+= cdir)
 					moves.push_back({row, col, r, c});
@@ -385,7 +384,7 @@ std::vector<Move> Chessboard::getLegalMoves(int row, int col) {
 			    board[0][5] == ' ' &&
 			    board[0][6] == ' ')
 				moves.push_back({0, 4, 0, 6});
-		} else if (isBlack && !blackKingMoved) {
+		} else if (!isWhite && !blackKingMoved) {
 			// queenside
 			if (!blackRook0Moved &&
 			    board[7][1] == ' ' &&
@@ -401,7 +400,7 @@ std::vector<Move> Chessboard::getLegalMoves(int row, int col) {
 
 		break;
 	default:  // empty (or something completely different)
-
+		break;
 	}
 
 	return moves;
@@ -414,7 +413,7 @@ std::vector<Move> Chessboard::getLegalMoves(bool isWhite) {
 		for (int col = 0; col < 8; col++) {
 			if (board[row][col] != ' ' && white[row][col] == isWhite) {
 				// append moves for this square to vector
-				std::vector<Moves> tmp = getLegalMoves(row, col);
+				std::vector<Move> tmp = getLegalMoves(row, col);
 				moves.insert(moves.end(), tmp.begin(), tmp.end());
 			}
 		}
@@ -573,5 +572,5 @@ bool Chessboard::checkLine(Move move) {
 
 bool Chessboard::checkDest(bool isWhite, int row, int col) {
 	if (row < 0 || 8 <= row || col < 0 || 8 <= col) return false;
-	return (board[row][col] == ' ' || white[row][col])
+	return (board[row][col] == ' ' || isWhite ^ white[row][col]);
 }

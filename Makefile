@@ -1,13 +1,18 @@
 CXX=g++
-CXXFLAGS=-c -g
+CXXFLAGS=-c
 LDFLAGS=
 SOURCES=main.cpp chessboard.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 
+.PHONY: all
 all: chess
 
+.PHONY: debug
+debug: chess
+debug: CXXFLAGS += -g
+
 chess: $(OBJECTS)
-	$(CXX) $(LDFLAGS) $(OBJECTS) -o chess
+	$(CXX) $(OBJECTS) -o chess $(LDFLAGS) 
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) $< -o $@
