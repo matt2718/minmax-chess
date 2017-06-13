@@ -3,12 +3,7 @@
 #include "chessboard.hpp"
 
 Chessboard::Chessboard() {
-	for (int i = 0; i < 8; i++) {
-		white[0][i] = true;
-		white[1][i] = true;
-		white[6][i] = false;
-		white[7][i] = false;
-	}
+
 }
 
 Chessboard::~Chessboard() {
@@ -26,12 +21,17 @@ char Chessboard::makeMove(Move move) {
 	char piece = board[rowFrom][colFrom];
 	bool isWhite = white[rowFrom][colFrom];
 	char captured = board[rowTo][colTo];
+
+	// CHANGE THIS IF getAdvChange BECOMES A HEURISTIC
+	whiteAdv += getAdvChange(move, true);
 	
 	// actually making the move
 	board[rowTo][colTo] = piece;
 	white[rowTo][colTo] = isWhite;
 	board[rowFrom][colFrom] = ' ';
 
+	lastMove = move;
+	
 	// move rook if castling
 	if (piece == 'k' && colFrom == 4) {
 		if (colTo == 2) { // queenside
@@ -96,7 +96,7 @@ char Chessboard::makeMove(Move move) {
 		if (rowFrom == 1 && rowTo == 3) lastWhitePawn = colFrom;
 		if (rowFrom == 6 && rowTo == 4) lastBlackPawn = colFrom;
 	}
-	
+
 	return captured;
 }
 
@@ -421,7 +421,11 @@ std::vector<Move> Chessboard::getLegalMoves(bool isWhite) {
 	
 	return moves;
 }
-	
+
+Move Chessboard::getLastMove() {
+	return lastMove;
+}
+
 char Chessboard::getPiece(int row, int col) {
 	return board[row][col];
 }
@@ -433,6 +437,7 @@ bool Chessboard::getColor(int row, int col) {
 char Chessboard::removePiece(int row, int col) {
 	char tmp = board[row][col];
 	board[row][col] = ' ';
+	whiteAdv = advCalc(); // not a normal move, recalculate advantage
 	return tmp;
 }
 
@@ -440,7 +445,75 @@ bool Chessboard::addPiece(char piece, bool isWhite, int row, int col) {
 	if (board[row][col] != ' ') return false;
 	board[row][col] = piece;
 	white[row][col] = isWhite;
+	whiteAdv = advCalc(); // not a normal move, recalculate advantage
 	return true;
+}
+
+int Chessboard::getAdvantage(bool isWhite) {
+	return isWhite ? whiteAdv : -whiteAdv;
+}
+
+int Chessboard::getAdvChange(Move move, bool isWhite) {
+	int weight;
+	switch (board[move.rowTo][move.colTo]) {
+	case 'p': // pawn
+		weight = 1;
+		break;
+	case 'r': // rook
+		weight = 5;
+		break;
+	case 'n': // knight
+		weight = 3;
+		break;
+	case 'b': // bishop
+		weight = 3;
+		break;
+	case 'q': // queen
+		weight = 9;
+		break;
+	case 'k': // king
+		weight = 1000;
+		break;
+	default:  // empty (or something completely different)
+		weight = 0;
+	}
+
+	return (white[move.rowTo][move.colTo] ^ isWhite) ? weight : -weight;
+}
+
+int Chessboard::advCalc() {
+	int adv = 0;
+	for (int row = 0; row < 8; row++) {
+		for (int col = 0; col < 8; col++) {
+			int weight;
+			switch (board[row][col]) {
+			case 'p': // pawn
+				weight = 1;
+				break;
+			case 'r': // rook
+				weight = 5;
+				break;		
+			case 'n': // knight
+				weight = 3;
+				break;
+			case 'b': // bishop
+				weight = 3;
+				break;	
+			case 'q': // queen
+				weight = 9;
+				break;
+			case 'k': // king
+				weight = 1000;
+				break;
+			default:  // empty (or something completely different)
+				weight = 0;
+			}
+
+			adv += (white[row][col] ? weight : -weight);
+		}
+	}
+
+	return adv;
 }
 
 void Chessboard::printBoard(bool isWhite) {	
@@ -568,7 +641,6 @@ bool Chessboard::checkLine(Move move) {
 	}
 	return true;
 }
-
 
 bool Chessboard::checkDest(bool isWhite, int row, int col) {
 	if (row < 0 || 8 <= row || col < 0 || 8 <= col) return false;
