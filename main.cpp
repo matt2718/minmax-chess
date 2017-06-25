@@ -1,52 +1,82 @@
 #include <iostream>
 #include "chessboard.hpp"
+#include "minimax.hpp"
 
 void printMoves(Chessboard *cb);
+void minimaxTest();
 
 int main(int argc, char **argv) {
-	Chessboard *cb = new Chessboard();
+	//minimaxTest();
+
+	MinimaxTree tree;
 
 	char ch1, ch2, ch3, ch4;
-
-	cb->printBoard(true);
-	//printMoves(cb);
-	std::cout << "White adv: " << cb->getAdvantage(true) << std::endl;
+	
+	tree.board.printBoard(true);
+	
 	std::cout << ">>>> ";
 	std::cin >> ch1;
 	while (ch1 != 'q' && !std::cin.eof()) {
 		std::cin >> ch2 >> ch3 >> ch4;
-		std::cin.ignore(1<<30, '\n');
-		Move m;
-		m.colFrom = ch1 - 'a';
-		m.rowFrom = ch2 - '1';
-		m.colTo = ch3 - 'a';
-		m.rowTo = ch4 - '1';
+		std::cin.ignore(1<<30, '\n');  // flush stdin
+		Move whiteMove;
+		whiteMove.colFrom = ch1 - 'a';
+		whiteMove.rowFrom = ch2 - '1';
+		whiteMove.colTo = ch3 - 'a';
+		whiteMove.rowTo = ch4 - '1';
 
-		if (cb->isLegalMove(true, m))
-			std::cout << "White: yes " << cb->makeMove(m) << std::endl;
-		else
-			std::cout << "White: no" << std::endl;
+		if (tree.board.isLegalMove(true, whiteMove)) {
+			tree.makeMove(whiteMove);
+			tree.board.printBoard(true);
+			Move blackMove = tree.getBestMove(false, 4);
+			tree.makeMove(blackMove);
+			tree.board.printBoard(true);
+		} else {
+			std::cout << "Not a legal move" << std::endl;
+		}
 
-		if (cb->isLegalMove(false, m))
-			std::cout << "Black: yes " << cb->makeMove(m) << std::endl;
-		else
-			std::cout << "Black: no" << std::endl;
+		//printMoves(tree.board);
+		//std::cout << "White adv: " << tree.board.getAdvantage(true) << std::endl;
 
-		cb->printBoard(true);
-		//printMoves(cb);
-		std::cout << "White adv: " << cb->getAdvantage(true) << std::endl;
 		std::cout << ">>>> ";
 		std::cin >> ch1;
 	}
 	if (std::cin.eof()) std::cout << std::endl; // newline if ^D
 	
-	delete cb;
 	return 0;
 }
 
-void printMoves(Chessboard *cb) {
-	std::vector<Move> whiteMoves = cb->getLegalMoves(true);
-	std::vector<Move> blackMoves = cb->getLegalMoves(false);
+void minimaxTest() {
+	Chessboard board;
+	for (int row = 0; row < 8; row++) {
+		for (int col = 0; col < 8; col++) {
+			board.removePiece(row, col);
+		}
+	}
+
+	// B . .
+	// . R .
+	// . . .
+	// n . .
+	board.addPiece('n', true, 0, 0);
+	board.addPiece('r', false, 2, 1);
+	board.addPiece('b', false, 3, 2);
+
+	MinimaxTree *tree = new MinimaxTree(board);
+	Move move1 = tree->getBestMove(true, 1);
+	Move move2 = tree->getBestMove(true, 2);
+
+	std::cout << "(" << move1.rowFrom << "," << move1.colFrom << ") to "
+	          << "(" << move1.rowTo << "," << move1.colTo << ")" << std::endl;
+	std::cout << "(" << move2.rowFrom << "," << move2.colFrom << ") to "
+	          << "(" << move2.rowTo << "," << move2.colTo << ")" << std::endl;
+	
+	delete tree;
+}
+
+void printMoves(Chessboard *board) {
+	std::vector<Move> whiteMoves = board->getLegalMoves(true);
+	std::vector<Move> blackMoves = board->getLegalMoves(false);
 
 	std::cout << "WHITE | BLACK" << std::endl;
 	std::cout << "------+------" << std::endl;

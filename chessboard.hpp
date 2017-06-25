@@ -1,5 +1,5 @@
-#ifndef _CHESSBOARD_H
-#define _CHESSBOARD_H
+#ifndef _CHESSBOARD_HPP
+#define _CHESSBOARD_HPP
 
 #include <vector>
 
@@ -8,6 +8,8 @@ struct Move {
 	int colFrom;
 	int rowTo;
 	int colTo;
+
+	bool operator==(const Move& other);
 };
 
 class Chessboard {

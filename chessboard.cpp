@@ -2,6 +2,13 @@
 
 #include "chessboard.hpp"
 
+bool Move::operator==(const Move& other) {
+	return (rowFrom == other.rowFrom &&
+	        colFrom == other.colFrom &&
+	        rowTo == other.rowTo &&
+	        colTo == other.colTo);
+}
+
 Chessboard::Chessboard() {
 
 }

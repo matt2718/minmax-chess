@@ -1,7 +1,8 @@
 CXX=g++
-CXXFLAGS=-c
+CXXFLAGS=
 LDFLAGS=
-SOURCES=main.cpp chessboard.cpp minimax.cpp
+LDLIBS=
+SOURCES=chessboard.cpp main.cpp minimax.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 
 .PHONY: all
@@ -12,7 +13,7 @@ debug: chess
 debug: CXXFLAGS += -g -O0
 
 chess: $(OBJECTS)
-	$(CXX) $(OBJECTS) -o chess $(LDFLAGS) 
+	$(CXX) -o chess $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(LDLIBS)
 
 .cpp.o:
-	$(CXX) $(CXXFLAGS) $< -o $@
+	$(CXX) -o $@ -c $(CXXFLAGS) $<

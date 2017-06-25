@@ -1,52 +1,51 @@
 #include "minimax.hpp"
 
-MinimaxTree::MinimaxTree() {
+MinimaxTree::MinimaxTree() : board() {
 
 }
 
-MinimaxTree::MinimaxTree(Chessboard board) {
-	cb = board;
+MinimaxTree::MinimaxTree(Chessboard cb) {
+	board = cb;
 }
 
 MinimaxTree::~MinimaxTree() {
-	for (MinimaxTree *child : children)
+	for (MinimaxTree *child : children) {
 		delete child;
+	}
 }
 
 void MinimaxTree::makeMove(Move move) {
 	MinimaxTree *newTree = NULL;
 
 	for (MinimaxTree *child : children) {
-		Move thisMove = child->cb.getLastMove();
-		// if this is the move we're making, reuse the tree
-		if (thisMove.rowFrom == move.rowFrom &&
-		    thisMove.colFrom == move.colFrom &&
-		    thisMove.rowTo == move.rowTo &&
-		    thisMove.colTo == move.colTo)
+		Move thisMove = child->board.getLastMove();
+		// if this is the move we're making, reuse the subtree
+		if (thisMove == move)
 			newTree = child;
 		else
 			delete child;
 	}
 
 	if (newTree != NULL) {
-		cb = newTree->cb;
+		board = newTree->board;
 		children = newTree->children;
+		newTree->children.clear(); // prevent recursive free in destructor
 		delete newTree;
 	} else {
-		cb.makeMove(move);
+		board.makeMove(move);
 	}
 }
 
-Move MinimaxTree::getBestMove(bool isWhite) {
+Move MinimaxTree::getBestMove(bool isWhite, int depth) {
 	makeChildren(isWhite);
 
 	int maxAdv = -1000000;
 	Move move;
 	for (MinimaxTree *child : children) {
-		int adv = child->minimax(isWhite, !isWhite, 4);
+		int adv = child->minimax(isWhite, !isWhite, depth);
 		if (adv > maxAdv) {
 			maxAdv = adv;
-			move = child->cb.getLastMove();
+			move = child->board.getLastMove();
 		}
 	}
 
@@ -56,7 +55,7 @@ Move MinimaxTree::getBestMove(bool isWhite) {
 int MinimaxTree::minimax(bool isWhite, bool toMove, int steps) {
 	// no more steps
 	if (steps <= 0)
-		return cb.getAdvantage(isWhite);
+		return board.getAdvantage(isWhite);
 
 	makeChildren(toMove);
 
@@ -85,8 +84,8 @@ int MinimaxTree::minimax(bool isWhite, bool toMove, int steps) {
 void MinimaxTree::makeChildren(bool isWhite) {
 	// only run if nothing has been added to vector
 	if (children.empty()) {
-		for (Move move : cb.getLegalMoves(isWhite)) {
-			MinimaxTree *tree = new MinimaxTree(cb);
+		for (Move move : board.getLegalMoves(isWhite)) {
+			MinimaxTree *tree = new MinimaxTree(board);
 			tree->makeMove(move);
 			children.push_back(tree);
 		}
